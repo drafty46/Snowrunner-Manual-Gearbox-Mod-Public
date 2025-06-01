@@ -6,13 +6,13 @@ Disables 'auto' gear shifting in favor of manual shifting through custom keybind
 
 #### Manual Loading
 
-1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/releases)
+1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/releases)
 1. Place files from _ManualLoading_ folder next to _SnowRunner.exe_
 1. Start SnowRunner
 1. Run _smgm-loader.exe_ to load the mod
 
 #### Automatic Loading
-1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/releases)
+1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/releases)
 1. Place files from _AutomaticLoading_ folder next to _SnowRunner.exe_
 1. Start SnowRunner and the mod will load automatically
 
@@ -27,7 +27,8 @@ Detaching can be bound in config\
 Skipping neutral when shifting up/down can be disabed in config\
 Added binds for up to 12 gears\
 Added check that game is active window\
-Changed config to use VK_ instead of hex values
+Changed config to use VK_ instead of hex values\
+Added option to require clutch
 
 ## Credit to [Ferrster](https://github.com/Ferrster/Snowrunner-Manual-Gearbox-Mod) for the original code
 ## Credit to [GoldCobaltRound](https://github.com/GoldCobaltRound/Snowrunner-Manual-Gearbox-Mod) for updating the offsets
