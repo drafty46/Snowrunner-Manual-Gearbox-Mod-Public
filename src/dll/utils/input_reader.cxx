@@ -23,6 +23,8 @@ extern std::unordered_map<std::string, WORD> VKToHexMap;
 
 extern std::unordered_map<WORD, std::string> HexToVKMap;
 
+extern smgm::InputReader* g_InputReader;
+
 extern smgm::IniConfig g_IniConfig;
 
 extern float currentCoef;
@@ -38,9 +40,6 @@ extern bool IsActiveWindowCurrentProcess();
 std::atomic<bool> isClutchPressedKb{};
 std::atomic<bool> isClutchPressedJoy{};
 
-std::atomic<bool> lowThreadStop{};
-std::thread lowThread;
-
 namespace smgm {
 
 inline const WORD FromHex(const std::string &value) {
@@ -53,7 +52,8 @@ const std::unordered_map<InputDeviceType, std::unordered_map<InputAction, WORD>>
                     {SHIFT_PREV_AUTO_GEAR, VK_LCONTROL},
                     {SHIFT_NEXT_AUTO_GEAR, VK_LMENU},
                     {CLUTCH, VK_LSHIFT},
-                    {DETACH_FROM_GAME, VK_F10}
+                    {DETACH_FROM_GAME, VK_F10},
+                    {RELOAD_CONFIG, VK_F11}
                 }},
                {JOYSTICK,
                 {
@@ -106,6 +106,7 @@ void InputReader::BindKeyboard(SHORT key, FncOnPressed &&onPressed) {
 }
 
 void InputReader::ProcessKeys() {
+  LOG_DEBUG("Started processing");
   while (!m_bStop) {
     std::shared_lock lck(m_mtx);
 
@@ -177,7 +178,7 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
 
     boost::mp11::mp_for_each<
         boost::describe::describe_enumerators<InputAction>>([&, this](auto D) {
-      const auto action = [&, this]() -> FncOnPressed {
+      const auto action = [&]() -> FncOnPressed {
         static const auto ShiftGearFnc = [](std::int32_t gear) {
           return [gear] {
             currentCoef = GameRelatedData::PowerCoefLowPlusGear;
@@ -264,10 +265,16 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
             }
           };
         case DETACH_FROM_GAME:
-          return [this] {
-            lowThreadStop.store(true);
-            if (lowThread.joinable()) { lowThread.join(); }
-            Stop();
+          return [] {
+            g_InputReader->Stop();
+          };
+        case RELOAD_CONFIG:
+          return [] {
+            g_InputReader->Stop();
+            g_InputReader = new smgm::InputReader;
+            g_IniConfig.Read();
+            g_InputReader->ReadInputConfig(g_IniConfig);
+            g_InputReader->Start();
           };
         }
 
