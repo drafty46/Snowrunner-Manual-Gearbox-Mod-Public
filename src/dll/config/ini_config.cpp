@@ -8,7 +8,7 @@
 extern smgm::InputReader *g_InputReader;
 
 namespace smgm {
-IniConfig::IniConfig() : m_path("smgm.ini") {}
+IniConfig::IniConfig() : m_path("smgm++.ini") {}
 
 IniConfig::IniConfig(const std::filesystem::path &path) : m_path(path) {
   ReadFrom(path);
@@ -64,7 +64,9 @@ bool IniConfig::WriteDefaultConfig() {
 }
 
 void IniConfig::WriteDefaultValues() {
-  SetIfNotExists("SMGM.DisableGameShifting", false);
+  SetIfNotExists("SMGM.DisableGameShifting", true);
+  SetIfNotExists("SMGM.SkipNeutral", true);
+  SetIfNotExists("SMGM.RequireClutch", false);
 }
 
 } // namespace smgm

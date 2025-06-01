@@ -1,3 +1,4 @@
+#include "game_data/game_data.h"
 #include "utils/input_reader.h"
 #include "custom_functions.h"
 #include "utils/format_helpers.h"
@@ -12,10 +13,33 @@
 #include <utility>
 #include <winerror.h>
 #include <winuser.h>
+#include "utils/keymap.h"
 
 #include <boost/mp11.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+
+extern std::unordered_map<std::string, WORD> VKToHexMap;
+
+extern std::unordered_map<WORD, std::string> HexToVKMap;
+
+extern smgm::IniConfig g_IniConfig;
+
+extern float currentCoef;
+
+WORD clutchKb{};
+WORD clutchJoy{};
+
+WORD detachKb{};
+WORD detachJoy{};
+
+extern bool IsActiveWindowCurrentProcess();
+
+std::atomic<bool> isClutchPressedKb{};
+std::atomic<bool> isClutchPressedJoy{};
+
+std::atomic<bool> lowThreadStop{};
+std::thread lowThread;
 
 namespace smgm {
 
@@ -28,11 +52,14 @@ const std::unordered_map<InputDeviceType, std::unordered_map<InputAction, WORD>>
                 {
                     {SHIFT_PREV_AUTO_GEAR, VK_LCONTROL},
                     {SHIFT_NEXT_AUTO_GEAR, VK_LMENU},
+                    {CLUTCH, VK_LSHIFT},
+                    {DETACH_FROM_GAME, VK_F10}
                 }},
                {JOYSTICK,
                 {
                     {SHIFT_PREV_AUTO_GEAR, VK_PAD_DPAD_LEFT},
                     {SHIFT_NEXT_AUTO_GEAR, VK_PAD_DPAD_RIGHT},
+                    {CLUTCH, VK_PAD_LSHOULDER }
                 }}};
 
 InputReader::InputReader() { LOG_DEBUG("Input reader created"); }
@@ -82,39 +109,58 @@ void InputReader::ProcessKeys() {
   while (!m_bStop) {
     std::shared_lock lck(m_mtx);
 
-    // Handle keyboard input
-    for (auto &[key, info] : m_keysKeyboard) {
-      if (GetAsyncKeyState(static_cast<SHORT>(key)) & 0x8000) {
-        if (!info.bPressed) {
-          info.bPressed = true;
+    if (IsActiveWindowCurrentProcess()) {
+        // Handle keyboard input
+        for (auto& [key, info] : m_keysKeyboard) {
+            if (GetAsyncKeyState(static_cast<SHORT>(key)) & 0x8000) {
+                if (key == clutchKb) {
+                    isClutchPressedKb = true;
+                }
+                if (!info.bPressed) {
+                    info.bPressed = true;
 
-          if (info.onPressed) {
-            info.onPressed();
-          }
+                    if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || key == detachKb || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
+                        info.onPressed();
+                    }
+                }
+            }
+            else {
+                info.bPressed = false;
+                if (key == clutchKb) {
+                    isClutchPressedKb = false;
+                }
+            }
         }
-      } else {
-        info.bPressed = false;
-      }
-    }
 
-    // Handle joystick input
-    for (int i = 0; i < XUSER_MAX_COUNT; ++i) {
-      if (XINPUT_KEYSTROKE ks; XInputGetKeystroke(i, 0, &ks) == ERROR_SUCCESS) {
-        if (m_keysJoystick.count(ks.VirtualKey) == 0) {
-          continue;
+        // Handle joystick input
+        for (int i = 0; i < XUSER_MAX_COUNT; ++i) {
+            if (XINPUT_KEYSTROKE ks; XInputGetKeystroke(i, 0, &ks) == ERROR_SUCCESS) {
+                if (m_keysJoystick.count(ks.VirtualKey) == 0) {
+                    continue;
+                }
+                KeyInfo& info = m_keysJoystick[ks.VirtualKey];
+
+                if (ks.Flags & XINPUT_KEYSTROKE_KEYDOWN || ks.Flags & XINPUT_KEYSTROKE_REPEAT) {
+                    if (ks.VirtualKey == clutchJoy) {
+                        isClutchPressedJoy = true;
+                    }
+                    if (!info.bPressed) {
+                        info.bPressed = true;
+
+                        if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || ks.VirtualKey == detachJoy || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
+                            info.onPressed();
+                        }
+                    }
+
+                }
+                else if (ks.Flags & XINPUT_KEYSTROKE_KEYUP) {
+                    info.bPressed = false;
+                    if (ks.VirtualKey == clutchJoy) {
+                        isClutchPressedJoy = false;
+                    }
+                }
+            }
         }
-        KeyInfo &info = m_keysJoystick[ks.VirtualKey];
-
-        if (ks.Flags & XINPUT_KEYSTROKE_KEYDOWN) {
-          info.bPressed = true;
-
-          if (info.onPressed) {
-            info.onPressed();
-          }
-        } else if (ks.Flags & XINPUT_KEYSTROKE_KEYUP) {
-          info.bPressed = false;
-        }
-      }
     }
   }
 
@@ -125,15 +171,16 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
   std::unique_lock lck(m_mtx);
 
   static const auto ReadKeybindings =
-      [](const boost::property_tree::ptree &pt,
+      [this](const boost::property_tree::ptree &pt,
          const std::string &key) -> std::unordered_map<WORD, FncOnPressed> {
     std::unordered_map<WORD, FncOnPressed> result;
 
     boost::mp11::mp_for_each<
-        boost::describe::describe_enumerators<InputAction>>([&](auto D) {
-      const auto action = [&]() -> FncOnPressed {
+        boost::describe::describe_enumerators<InputAction>>([&, this](auto D) {
+      const auto action = [&, this]() -> FncOnPressed {
         static const auto ShiftGearFnc = [](std::int32_t gear) {
           return [gear] {
+            currentCoef = GameRelatedData::PowerCoefLowPlusGear;
             if (auto *veh = smgm::GetCurrentVehicle()) {
               veh->ShiftToGear(gear);
             }
@@ -157,49 +204,70 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
           return ShiftGearFnc(7);
         case SHIFT_8_GEAR:
           return ShiftGearFnc(8);
+        case SHIFT_9_GEAR:
+            return ShiftGearFnc(9);
+        case SHIFT_10_GEAR:
+            return ShiftGearFnc(10);
+        case SHIFT_11_GEAR:
+            return ShiftGearFnc(11);
+        case SHIFT_12_GEAR:
+            return ShiftGearFnc(12);
         case SHIFT_HIGH_GEAR:
           return [] {
+            currentCoef = GameRelatedData::PowerCoefLowPlusGear;
             if (auto *veh = smgm::GetCurrentVehicle()) {
               veh->ShiftToHighGear();
             }
           };
         case SHIFT_LOW_GEAR:
           return [] {
-            if (auto *veh = smgm::GetCurrentVehicle()) {
-              veh->ShiftToLowGear();
-            }
+              currentCoef = GameRelatedData::PowerCoefLowGear;
+              if (auto* veh = smgm::GetCurrentVehicle()) {
+                  veh->ShiftToLowGear();
+              }
           };
         case SHIFT_LOW_PLUS_GEAR:
           return [] {
-            if (auto *veh = smgm::GetCurrentVehicle()) {
-              veh->ShiftToLowPlusGear();
-            }
+              currentCoef = GameRelatedData::PowerCoefLowPlusGear;
+              if (auto* veh = smgm::GetCurrentVehicle()) {
+                  veh->ShiftToLowPlusGear();
+              }
           };
         case SHIFT_LOW_MINUS_GEAR:
           return [] {
-            if (auto *veh = smgm::GetCurrentVehicle()) {
-              veh->ShiftToLowMinusGear();
-            }
+              currentCoef = GameRelatedData::PowerCoefLowMinusGear;
+              if (auto* veh = smgm::GetCurrentVehicle()) {
+                  veh->ShiftToLowMinusGear();
+              }
           };
         case SHIFT_NEUTRAL:
           return ShiftGearFnc(0);
         case SHIFT_PREV_AUTO_GEAR:
           return [] {
+            currentCoef = GameRelatedData::PowerCoefLowPlusGear;
             if (auto *veh = smgm::GetCurrentVehicle()) {
               veh->ShiftToPrevGear();
             }
           };
         case SHIFT_NEXT_AUTO_GEAR:
           return [] {
+            currentCoef = GameRelatedData::PowerCoefLowPlusGear;
             if (auto *veh = smgm::GetCurrentVehicle()) {
               veh->ShiftToNextGear();
             }
           };
         case SHIFT_REVERSE_GEAR:
           return [] {
+            currentCoef = GameRelatedData::PowerCoefLowPlusGear;
             if (auto *veh = smgm::GetCurrentVehicle()) {
               veh->ShiftToReverseGear();
             }
+          };
+        case DETACH_FROM_GAME:
+          return [this] {
+            lowThreadStop.store(true);
+            if (lowThread.joinable()) { lowThread.join(); }
+            Stop();
           };
         }
 
@@ -213,7 +281,33 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
           fmt::format("{}: {}", iniKey, v.has_value() ? v.value() : "<empty>"));
 
       if (v.has_value() && !v.value().empty()) {
-        result.insert({FromHex(v.value()), std::move(action)});
+        std::string keyString = v.value();
+        keyString.erase(0, keyString.find_first_not_of(" \t"));
+        keyString.erase(keyString.find_last_not_of(" \t") + 1);
+
+        auto keyValue = VKToHexMap.find(keyString);
+        if (keyValue != VKToHexMap.end()) {
+            LOG_DEBUG("Found key: " + keyString + " -> " + std::to_string(keyValue->second));
+            result.insert({ keyValue->second, std::move(action) });
+            if (iniKey == "KEYBOARD.CLUTCH") {
+                clutchKb = keyValue->second;
+            }
+            if (iniKey == "JOYSTICK.CLUTCH") {
+                clutchJoy = keyValue->second;
+            }
+            if (iniKey == "KEYBOARD.DETACH_FROM_GAME") {
+                detachKb = keyValue->second;
+            }
+            if (iniKey == "JOYSTICK.DETACH_FROM_GAME") {
+                detachJoy = keyValue->second;
+            }
+        }
+        else {
+            LOG_DEBUG("Key not found: " + keyString);
+        }
+      }
+      else {
+          LOG_DEBUG("No value found for key: " + iniKey);
       }
     });
 
@@ -254,8 +348,9 @@ void InputReader::WriteDefaultConfig(IniConfig &config) {
                   return {};
                 }
 
-                return fmt::format("{:#x}",
-                                   deviceDefaultKbs.at(deInputAction.value));
+                auto keyValue = HexToVKMap.find(deviceDefaultKbs.at(deInputAction.value));
+
+                return fmt::format("{}",keyValue->second);
               }();
 
               config.GetConfig().put(fmt::format("{}.{}",

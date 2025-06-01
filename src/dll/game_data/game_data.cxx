@@ -12,6 +12,8 @@
 //   SwitchAWD(veh, enabled);
 // }
 
+float currentCoef = 1.0f;
+
 extern smgm::IniConfig g_IniConfig;
 
 bool SMGM_HOOK_NAME(ShiftGear)(Vehicle *veh, std::int32_t gear) {
@@ -68,7 +70,7 @@ bool SMGM_HOOK_NAME(DisableAutoAndShift)(Vehicle *veh, std::int32_t gear) {
 
 void SMGM_HOOK_NAME(SetPowerCoef)(Vehicle *veh, float coef) {
   if (g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
-    SMGM_CALL_ORIG_FN(SetPowerCoef, veh, GameRelatedData::PowerCoefLowPlusGear);
+    SMGM_CALL_ORIG_FN(SetPowerCoef, veh, currentCoef);
     return;
   }
 

@@ -17,6 +17,7 @@
 #include <utility>
 #include <winerror.h>
 #include <winuser.h>
+#include <Psapi.h>
 
 #include "config/ini_config.hpp"
 #include "custom_functions.h"
@@ -31,6 +32,20 @@
 std::atomic_bool g_Shutdown = false;
 smgm::InputReader *g_InputReader = nullptr;
 smgm::IniConfig g_IniConfig;
+
+bool IsActiveWindowCurrentProcess() {
+    HWND hwnd = GetForegroundWindow();
+    if (hwnd == NULL) {
+        return false;
+    }
+
+    DWORD pid;
+    GetWindowThreadProcessId(hwnd, &pid);
+
+    DWORD currentPid = GetCurrentProcessId();
+
+    return pid == currentPid;
+}
 
 DWORD WINAPI MainThread(LPVOID param) {
   g_InputReader->WaitForThread();
@@ -55,7 +70,7 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   spdlog::set_level(spdlog::level::debug);
   spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
 
-  LOG_DEBUG("SnowRunner Manual Gearbox v0.1.16");
+  LOG_DEBUG("SnowRunner Manual Gearbox++ v1.663329.0");
 
   if (!g_IniConfig.WriteDefaultConfig()) {
     g_IniConfig.Read();
@@ -67,7 +82,7 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   smgm::AttachHooks();
 
   g_InputReader = new smgm::InputReader;
-  g_InputReader->BindKeyboard(VK_F1, [] { g_InputReader->Stop(); });
+  //g_InputReader->BindKeyboard(VK_F10, [] { g_InputReader->Stop(); });
   g_InputReader->ReadInputConfig(g_IniConfig);
   g_InputReader->Start();
 
@@ -85,11 +100,22 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 }
 
 void Teardown(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  LOG_DEBUG("DLL Detach");
+    LOG_DEBUG("DLL Detach");
 
-  smgm::DetachHooks();
+    LOG_DEBUG("You can close this window");
+
+    smgm::DetachHooks();
+
 #ifndef SMGM_NO_CONSOLE
-  FreeConsole();
+    // First, get the console window before freeing it
+    HWND consoleWnd = GetConsoleWindow();
+    if (consoleWnd != nullptr) {
+        // Send a message to close the console window (forcefully destroy)
+        PostMessage(consoleWnd, WM_DESTROY, 0, 0);
+    }
+
+    // Detach the console from the process
+    FreeConsole();
 #endif
 }
 
