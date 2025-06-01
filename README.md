@@ -7,15 +7,14 @@ Disables 'auto' gear shifting in favor of manual shifting through custom keybind
 #### Manual Loading
 
 1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/releases)
-1. Place _smgm.dll_ and _smgm-loader.exe_ next to _SnowRunner.exe_
+1. Place files from _ManualLoading_ folder next to _SnowRunner.exe_
 1. Start SnowRunner
 1. Run _smgm-loader.exe_ to load the mod
 
 #### Automatic Loading
-1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/releases) and [TinyModLoader-x64](https://github.com/YAL-Game-Tools/TinyModInjector/releases)
-1. Place _dinput8.dll_ and _NativeMods_ folder next to _SnowRunner.exe_ **and make sure to delete TinySampleMod.dll from _NativeMods_ folder**
-1. Place _smgm.dll_ inside _NativeMods_ folder
-1. Start SnowRunner and the mod should load automatically
+1. Get the latest release [here](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/releases)
+1. Place files from _AutomaticLoading_ folder next to _SnowRunner.exe_
+1. Start SnowRunner and the mod will load automatically
 
 ## Usage
 
@@ -31,3 +30,5 @@ Added check that game is active window\
 Changed config to use VK_ instead of hex values
 
 ## Credit to [Ferrster](https://github.com/Ferrster/Snowrunner-Manual-Gearbox-Mod) for the original code
+## Credit to [GoldCobaltRound](https://github.com/GoldCobaltRound/Snowrunner-Manual-Gearbox-Mod) for updating the offsets
+## Credit to [YAL-Game-Tools](https://github.com/YAL-Game-Tools/TinyModInjector) for the dinput8.dll injector
