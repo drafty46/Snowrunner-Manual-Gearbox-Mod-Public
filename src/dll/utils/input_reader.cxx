@@ -35,6 +35,9 @@ WORD clutchJoy{};
 WORD detachKb{};
 WORD detachJoy{};
 
+WORD reloadKb{};
+WORD reloadJoy{};
+
 extern bool IsActiveWindowCurrentProcess();
 
 std::atomic<bool> isClutchPressedKb{};
@@ -120,7 +123,7 @@ void InputReader::ProcessKeys() {
                 if (!info.bPressed) {
                     info.bPressed = true;
 
-                    if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || key == detachKb || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
+                    if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || key == detachKb || key == reloadKb || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
                         info.onPressed();
                     }
                 }
@@ -148,7 +151,7 @@ void InputReader::ProcessKeys() {
                     if (!info.bPressed) {
                         info.bPressed = true;
 
-                        if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || ks.VirtualKey == detachJoy || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
+                        if (info.onPressed && (isClutchPressedKb || isClutchPressedJoy || ks.VirtualKey == detachJoy || ks.VirtualKey == reloadJoy || !g_IniConfig.Get<bool>("SMGM.RequireClutch"))) {
                             info.onPressed();
                         }
                     }
@@ -271,6 +274,7 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
         case RELOAD_CONFIG:
           return [] {
             g_InputReader->Stop();
+            delete g_InputReader;
             g_InputReader = new smgm::InputReader;
             g_IniConfig.Read();
             g_InputReader->ReadInputConfig(g_IniConfig);
@@ -307,6 +311,12 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
             }
             if (iniKey == "JOYSTICK.DETACH_FROM_GAME") {
                 detachJoy = keyValue->second;
+            }
+            if (iniKey == "KEYBOARD.RELOAD_CONFIG") {
+                reloadKb = keyValue->second;
+            }
+            if (iniKey == "JOYSTICK.RELOAD_CONFIG") {
+                reloadJoy = keyValue->second;
             }
         }
         else {

@@ -13,7 +13,7 @@
 int main(int argc, char **argv) {
   spdlog::set_level(spdlog::level::debug);
   spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
-  spdlog::info("SnowRunner Manual Gearbox Mod Loader");
+  spdlog::info("SMGM++ Loader");
 
   HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hProcessSnap == INVALID_HANDLE_VALUE) {
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  const WCHAR *dllName = L"smgm.dll";
+  const WCHAR *dllName = L"smgm++.dll";
   std::size_t memSize = (1 + lstrlenW(dllName)) * sizeof(WCHAR);
   LPWSTR bufDllName = LPWSTR(
       VirtualAllocEx(gameHandle, NULL, memSize, MEM_COMMIT, PAGE_READWRITE));

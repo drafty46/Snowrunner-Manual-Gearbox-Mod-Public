@@ -18,18 +18,82 @@ Disables 'auto' gear shifting in favor of manual shifting through custom keybind
 
 ## Usage
 
-When you use the mod for the first time, it'll create a config file _(smgm++.ini)_ near game's main _.exe_ file.\
-There you can change keybindings for keyboard and for gamepad separately. By default, cycling through gears is done by **LCtrl** and **LAlt** on keyboard, and **DPad Left & Right** on gamepad. Keys are represented by [VK_](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod/blob/master/src/dll/utils/keymap.cxx) values.
+The mod will generate a config file _smgm++.ini_ upon first start.
 
-## Improvements
+By default the mod is configured in a sequential gearbox style using **LCtrl** and **LAlt** on keyboard, **DPad Left** and **DPad Right** on controller.\
+Default keys for detaching and reloading config are F10 and F11 respectively.
 
-Detaching can be bound in config\
+**Default smgm++.ini**
+```
+[KEYBOARD]
+SHIFT_1_GEAR=
+SHIFT_2_GEAR=
+SHIFT_3_GEAR=
+SHIFT_4_GEAR=
+SHIFT_5_GEAR=
+SHIFT_6_GEAR=
+SHIFT_7_GEAR=
+SHIFT_8_GEAR=
+SHIFT_9_GEAR=
+SHIFT_10_GEAR=
+SHIFT_11_GEAR=
+SHIFT_12_GEAR=
+SHIFT_HIGH_GEAR=
+SHIFT_LOW_GEAR=
+SHIFT_LOW_PLUS_GEAR=
+SHIFT_LOW_MINUS_GEAR=
+SHIFT_NEUTRAL=
+SHIFT_PREV_AUTO_GEAR=VK_LCONTROL
+SHIFT_NEXT_AUTO_GEAR=VK_LMENU
+SHIFT_REVERSE_GEAR=
+CLUTCH=VK_LSHIFT
+DETACH_FROM_GAME=VK_F10
+RELOAD_CONFIG=VK_F11
+[JOYSTICK]
+SHIFT_1_GEAR=
+SHIFT_2_GEAR=
+SHIFT_3_GEAR=
+SHIFT_4_GEAR=
+SHIFT_5_GEAR=
+SHIFT_6_GEAR=
+SHIFT_7_GEAR=
+SHIFT_8_GEAR=
+SHIFT_9_GEAR=
+SHIFT_10_GEAR=
+SHIFT_11_GEAR=
+SHIFT_12_GEAR=
+SHIFT_HIGH_GEAR=
+SHIFT_LOW_GEAR=
+SHIFT_LOW_PLUS_GEAR=
+SHIFT_LOW_MINUS_GEAR=
+SHIFT_NEUTRAL=
+SHIFT_PREV_AUTO_GEAR=VK_PAD_DPAD_LEFT
+SHIFT_NEXT_AUTO_GEAR=VK_PAD_DPAD_RIGHT
+SHIFT_REVERSE_GEAR=
+CLUTCH=VK_PAD_LSHOULDER
+DETACH_FROM_GAME=
+RELOAD_CONFIG=
+[SMGM]
+DisableGameShifting=true
+SkipNeutral=true
+RequireClutch=false
+```
+
+- The keybinds use [VirtualKey](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/blob/master/src/dll/utils/keymap.cxx) values.
+- DisableGameShifting disables in-game shifting to avoid conflicts.
+- SkipNeutral skips neutral when using PREV_AUTO_GEAR and NEXT_AUTO_GEAR.
+- RequireClutch requires the CLUTCH key to be held while changing gears.
+
+
+## Improvements over the original
+
+Detaching keybind can be bound in config\
 Skipping neutral when shifting up/down can be disabed in config\
 Added binds for up to 12 gears\
 Added check that game is active window\
 Changed config to use VK_ instead of hex values\
 Added option to require clutch\
-Added ability to reload config without re-injecting
+Added ability to reload config via keybind without re-injecting
 
 ## Credit to [Ferrster](https://github.com/Ferrster/Snowrunner-Manual-Gearbox-Mod) for the original code
 ## Credit to [GoldCobaltRound](https://github.com/GoldCobaltRound/Snowrunner-Manual-Gearbox-Mod) for updating the offsets

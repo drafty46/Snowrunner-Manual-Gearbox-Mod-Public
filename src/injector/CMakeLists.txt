@@ -1,4 +1,4 @@
-set(TARGET_NAME smgm-loader)
+set(TARGET_NAME smgm++-loader)
 
 find_package(fmt REQUIRED)
 find_package(spdlog 1.11 REQUIRED)
