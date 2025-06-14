@@ -79,7 +79,7 @@ SkipNeutral=true
 RequireClutch=false
 ```
 
-- The keybinds use [VirtualKey](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/blob/master/src/dll/utils/keymap.cxx) values.
+- The keybinds use [VirtualKey](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/blob/master/ValidKeys.txt) values.
 - DisableGameShifting disables in-game shifting to avoid conflicts.
 - SkipNeutral skips neutral when using PREV_AUTO_GEAR and NEXT_AUTO_GEAR.
 - RequireClutch requires the CLUTCH key to be held while changing gears.
