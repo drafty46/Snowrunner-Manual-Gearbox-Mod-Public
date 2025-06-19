@@ -274,7 +274,6 @@ bool InputReader::ReadInputConfig(const IniConfig &config) {
         case RELOAD_CONFIG:
           return [] {
             g_InputReader->Stop();
-            delete g_InputReader;
             g_InputReader = new smgm::InputReader;
             g_IniConfig.Read();
             g_InputReader->ReadInputConfig(g_IniConfig);
