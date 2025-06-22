@@ -20,7 +20,7 @@ Disables 'auto' gear shifting in favor of manual shifting through custom keybind
 
 The mod will generate a config file _smgm++.ini_ upon first start.
 
-By default the mod is configured in a sequential gearbox style using **LCtrl** and **LAlt** on keyboard, **DPad Left** and **DPad Right** on controller.\
+By default the mod is configured in immersive mode. Switching between Low/High/Auto/Reverse/Neutral is done via the game ui and Auto permits shifting up/down using **LCtrl** and **LAlt** on keyboard, **DPad Left** and **DPad Right** on controller. ImmersiveMode also supports shifting to specific gears.\
 Default keys for detaching and reloading config are F10 and F11 respectively.
 
 **Default smgm++.ini**
@@ -74,15 +74,18 @@ CLUTCH=VK_PAD_LSHOULDER
 DETACH_FROM_GAME=
 RELOAD_CONFIG=
 [SMGM]
-DisableGameShifting=true
-SkipNeutral=true
+DisableGameShifting=false
+SkipNeutral=false
 RequireClutch=false
+ImmersiveMode=true
+
 ```
 
 - The keybinds use [VirtualKey](https://github.com/drafty46/Snowrunner-Manual-Gearbox-Mod-Public/blob/master/ValidKeys.txt) values.
 - DisableGameShifting disables in-game shifting to avoid conflicts.
 - SkipNeutral skips neutral when using PREV_AUTO_GEAR and NEXT_AUTO_GEAR.
 - RequireClutch requires the CLUTCH key to be held while changing gears.
+- ImmersiveMode limits changing gears to the AUTO position and the rest is done via in-game shifter.
 
 
 ## Improvements over the original

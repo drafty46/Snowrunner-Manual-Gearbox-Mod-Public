@@ -5,7 +5,7 @@
 
 namespace smgm {
 
-/// Returns currently operated vehicle if there is one, nullptr otherwise
-Vehicle *GetCurrentVehicle();
+	/// Returns currently operated vehicle if there is one, nullptr otherwise
+	Vehicle* GetCurrentVehicle();
 
 } // namespace smgm

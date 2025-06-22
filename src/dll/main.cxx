@@ -30,100 +30,102 @@
 #include "utils/logging.h"
 
 std::atomic_bool g_Shutdown = false;
-smgm::InputReader *g_InputReader = nullptr;
+smgm::InputReader* g_InputReader = nullptr;
 smgm::IniConfig g_IniConfig;
 
 bool IsActiveWindowCurrentProcess() {
-    HWND hwnd = GetForegroundWindow();
-    if (hwnd == NULL) {
-        return false;
-    }
+	HWND hwnd = GetForegroundWindow();
+	if (hwnd == NULL) {
+		return false;
+	}
 
-    DWORD pid;
-    GetWindowThreadProcessId(hwnd, &pid);
+	DWORD pid;
+	GetWindowThreadProcessId(hwnd, &pid);
 
-    DWORD currentPid = GetCurrentProcessId();
+	DWORD currentPid = GetCurrentProcessId();
 
-    return pid == currentPid;
+	return pid == currentPid;
 }
 
 DWORD WINAPI MainThread(LPVOID param) {
-  g_InputReader->WaitForThread();
+	g_InputReader->WaitForThread();
 
-  FreeLibraryAndExitThread((HMODULE)param, 0);
+	FreeLibraryAndExitThread((HMODULE)param, 0);
 
-  LOG_DEBUG("Exiting...");
+	LOG_DEBUG("Exiting...");
 
-  return 0;
+	return 0;
 }
 
 void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 #ifndef SMGM_NO_CONSOLE
-  if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-    AllocConsole();
-  }
-  freopen("CONIN$", "r", stdin);
-  freopen("CONOUT$", "w", stdout);
-  freopen("CONOUT$", "w", stderr);
+	if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+		AllocConsole();
+	}
+	freopen("CONIN$", "r", stdin);
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
 #endif
 
-  spdlog::set_level(spdlog::level::debug);
-  spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
+	spdlog::set_level(spdlog::level::debug);
+	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
 
-  LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.0");
+	LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.2");
 
-  if (!g_IniConfig.WriteDefaultConfig()) {
-    g_IniConfig.Read();
-  }
+	if (!g_IniConfig.WriteDefaultConfig()) {
+		g_IniConfig.Read();
+	}
 
 #ifdef SMGM_USE_DETOURS
-  DetourRestoreAfterWith();
+	DetourRestoreAfterWith();
 #endif
-  smgm::AttachHooks();
+	smgm::AttachHooks();
 
-  g_InputReader = new smgm::InputReader;
-  //g_InputReader->BindKeyboard(VK_F10, [] { g_InputReader->Stop(); });
-  g_InputReader->ReadInputConfig(g_IniConfig);
-  g_InputReader->Start();
+	g_InputReader = new smgm::InputReader;
+	g_InputReader->ReadInputConfig(g_IniConfig);
+	g_InputReader->Start();
 
-  if (Vehicle *veh = smgm::GetCurrentVehicle()) {
-    veh->TruckAction->IsInAutoMode = false;
-  }
+	if (Vehicle* veh = smgm::GetCurrentVehicle()) {
+		if (g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
+			veh->TruckAction->IsInAutoMode = false;
+		}
+	}
 
-  HMODULE gameBase = GetModuleHandleA(NULL);
-  LOG_DEBUG(FormatDataTable(
-      "Mod initialized", std::make_pair("Game base", gameBase),
-      std::make_pair("Current path",
-                     std::filesystem::current_path().string())));
+	HMODULE gameBase = GetModuleHandleA(NULL);
+	LOG_DEBUG(FormatDataTable(
+		"Mod initialized", std::make_pair("Game base", gameBase),
+		std::make_pair("Current path",
+			std::filesystem::current_path().string())));
 
-  CreateThread(0, 0, MainThread, hinst, 0, 0);
+	CreateThread(0, 0, MainThread, hinst, 0, 0);
 }
 
 void Teardown(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-    LOG_DEBUG("DLL Detach");
+	LOG_DEBUG("DLL Detach");
 
-    LOG_DEBUG("You can close this window");
+	LOG_DEBUG("You can close this window");
 
-    smgm::DetachHooks();
+	smgm::DetachHooks();
 
 #ifndef SMGM_NO_CONSOLE
-    // First, get the console window before freeing it
-    HWND consoleWnd = GetConsoleWindow();
-    if (consoleWnd != nullptr) {
-        // Send a message to close the console window (forcefully destroy)
-        PostMessage(consoleWnd, WM_DESTROY, 0, 0);
-    }
+	// First, get the console window before freeing it
+	HWND consoleWnd = GetConsoleWindow();
+	if (consoleWnd != nullptr) {
+		// Send a message to close the console window (forcefully destroy)
+		PostMessage(consoleWnd, WM_DESTROY, 0, 0);
+	}
 
-    // Detach the console from the process
-    FreeConsole();
+	// Detach the console from the process
+	FreeConsole();
 #endif
 }
 
 BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  if (dwReason == DLL_PROCESS_ATTACH) {
-    Init(hinst, dwReason, reserved);
-  } else if (dwReason == DLL_PROCESS_DETACH) {
-    Teardown(hinst, dwReason, reserved);
-  }
-  return TRUE;
+	if (dwReason == DLL_PROCESS_ATTACH) {
+		Init(hinst, dwReason, reserved);
+	}
+	else if (dwReason == DLL_PROCESS_DETACH) {
+		Teardown(hinst, dwReason, reserved);
+	}
+	return TRUE;
 }

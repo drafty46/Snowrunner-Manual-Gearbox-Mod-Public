@@ -17,6 +17,11 @@
   inline auto *Name = GetPtrToOffset<Fnc##Name>(Offset);                       \
   R SMGM_HOOK_NAME(Name)(__VA_ARGS__)
 
+#define SMGM_GAME_FUNCTION_EXTENDED(Offset, R, Name, OrigArgs, HookArgs)        \
+  using Fnc##Name = R OrigArgs;                                                 \
+  inline auto *Name = GetPtrToOffset<Fnc##Name>(Offset);                        \
+  R SMGM_HOOK_NAME(Name) HookArgs
+
 #ifdef SMGM_USE_DETOURS
 #define SMGM_ATTACH_HOOK(Name)                                                 \
   if (DetourAttach(&(PVOID &)Name, (PVOID)SMGM_HOOK_NAME(Name)) != NO_ERROR)   \
@@ -30,6 +35,6 @@
 #endif
 
 namespace smgm {
-void AttachHooks();
-void DetachHooks();
+	void AttachHooks();
+	void DetachHooks();
 } // namespace smgm

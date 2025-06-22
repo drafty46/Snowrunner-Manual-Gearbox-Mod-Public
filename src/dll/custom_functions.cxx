@@ -3,14 +3,14 @@
 
 namespace smgm {
 
-Vehicle *GetCurrentVehicle() {
-  auto *truckCtrl = *GameRelatedData::TruckControlPtr;
+	Vehicle* GetCurrentVehicle() {
+		auto* truckCtrl = *GameRelatedData::TruckControlPtr;
 
-  if (truckCtrl == nullptr) {
-    return nullptr;
-  }
+		if (truckCtrl == nullptr) {
+			return nullptr;
+		}
 
-  return truckCtrl->CurVehicle;
-}
+		return truckCtrl->CurVehicle;
+	}
 
 } // namespace smgm

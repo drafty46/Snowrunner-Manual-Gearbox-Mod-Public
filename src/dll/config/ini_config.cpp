@@ -5,68 +5,71 @@
 
 #include <boost/property_tree/ini_parser.hpp>
 
-extern smgm::InputReader *g_InputReader;
+extern smgm::InputReader* g_InputReader;
 
 namespace smgm {
-IniConfig::IniConfig() : m_path("smgm++.ini") {}
+	IniConfig::IniConfig() : m_path("smgm++.ini") {}
 
-IniConfig::IniConfig(const std::filesystem::path &path) : m_path(path) {
-  ReadFrom(path);
-}
+	IniConfig::IniConfig(const std::filesystem::path& path) : m_path(path) {
+		ReadFrom(path);
+	}
 
-void IniConfig::SetConfigPath(const std::filesystem::path &path) {
-  m_path = path;
-}
+	void IniConfig::SetConfigPath(const std::filesystem::path& path) {
+		m_path = path;
+	}
 
-bool IniConfig::Read() { return ReadFrom(m_path); }
+	bool IniConfig::Read() { return ReadFrom(m_path); }
 
-bool IniConfig::Write() { return WriteTo(m_path); }
+	bool IniConfig::Write() { return WriteTo(m_path); }
 
-bool IniConfig::ReadFrom(const std::filesystem::path &path) {
-  try {
-    read_ini(path.u8string(), m_config);
-  } catch (const std::exception &e) {
-    LOG_DEBUG(fmt::format("Failed to read config file: {}", e.what()));
+	bool IniConfig::ReadFrom(const std::filesystem::path& path) {
+		try {
+			read_ini(path.u8string(), m_config);
+		}
+		catch (const std::exception& e) {
+			LOG_DEBUG(fmt::format("Failed to read config file: {}", e.what()));
 
-    return false;
-  }
+			return false;
+		}
 
-  WriteDefaultValues();
+		WriteDefaultValues();
 
-  return true;
-}
+		return true;
+	}
 
-bool IniConfig::WriteTo(const std::filesystem::path &path) {
-  try {
-    write_ini(path.u8string(), m_config);
-  } catch (const std::exception &e) {
-    LOG_DEBUG(fmt::format("Failed to write config file: {}", e.what()));
+	bool IniConfig::WriteTo(const std::filesystem::path& path) {
+		try {
+			write_ini(path.u8string(), m_config);
+		}
+		catch (const std::exception& e) {
+			LOG_DEBUG(fmt::format("Failed to write config file: {}", e.what()));
 
-    return false;
-  }
+			return false;
+		}
 
-  return true;
-}
+		return true;
+	}
 
-bool IniConfig::WriteDefaultConfig() {
-  if (std::filesystem::exists(m_path)) {
-    return false;
-  }
+	bool IniConfig::WriteDefaultConfig() {
+		if (std::filesystem::exists(m_path)) {
+			return false;
+		}
 
-  LOG_DEBUG(
-      fmt::format("No config file found at path {}. Generating default one...",
-                  m_path.u8string()));
+		LOG_DEBUG(
+			fmt::format("No config file found at path {}. Generating default one...",
+				m_path.u8string()));
 
-  g_InputReader->WriteDefaultConfig(*this);
-  WriteDefaultValues();
+		g_InputReader->WriteDefaultConfig(*this);
+		WriteDefaultValues();
 
-  return Write();
-}
+		return Write();
+	}
 
-void IniConfig::WriteDefaultValues() {
-  SetIfNotExists("SMGM.DisableGameShifting", true);
-  SetIfNotExists("SMGM.SkipNeutral", true);
-  SetIfNotExists("SMGM.RequireClutch", false);
-}
+	void IniConfig::WriteDefaultValues() {
+		SetIfNotExists("SMGM.DisableGameShifting", false);
+		SetIfNotExists("SMGM.SkipNeutral", false);
+		SetIfNotExists("SMGM.RequireClutch", false);
+		SetIfNotExists("SMGM.ImmersiveMode", true);
+	}
 
 } // namespace smgm
