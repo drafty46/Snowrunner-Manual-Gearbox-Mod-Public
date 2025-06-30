@@ -33,6 +33,8 @@ std::atomic_bool g_Shutdown = false;
 smgm::InputReader* g_InputReader = nullptr;
 smgm::IniConfig g_IniConfig;
 
+extern std::unordered_map<Vehicle*, bool> IsInAuto;
+
 bool IsActiveWindowCurrentProcess() {
 	HWND hwnd = GetForegroundWindow();
 	if (hwnd == NULL) {
@@ -70,7 +72,7 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 	spdlog::set_level(spdlog::level::debug);
 	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
 
-	LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.2");
+	LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.3");
 
 	if (!g_IniConfig.WriteDefaultConfig()) {
 		g_IniConfig.Read();
@@ -86,9 +88,8 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 	g_InputReader->Start();
 
 	if (Vehicle* veh = smgm::GetCurrentVehicle()) {
-		if (g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
-			veh->TruckAction->IsInAutoMode = false;
-		}
+		IsInAuto[veh] = veh->TruckAction->IsInAutoMode;
+		veh->TruckAction->IsInAutoMode = false;
 	}
 
 	HMODULE gameBase = GetModuleHandleA(NULL);

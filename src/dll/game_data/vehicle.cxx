@@ -7,23 +7,25 @@
 
 extern smgm::IniConfig g_IniConfig;
 
-void Vehicle::SetPowerCoef(float coef) { TruckAction->PowerCoef = coef; }
+extern std::unordered_map<Vehicle*, bool> IsInAuto;
+
+void Vehicle::SetPowerCoef(float coef) { SMGM_CALL_HOOK(SetPowerCoef, this, coef); }
 
 std::int32_t Vehicle::GetMaxGear() const {
 	return SMGM_CALL_HOOK(GetMaxGear, this);
 }
 
-bool Vehicle::ShiftToGear(std::int32_t targetGear, float powerCoef, bool bypassCheck) {
+bool Vehicle::ShiftToGear(std::int32_t targetGear, float powerCoef) {
 	std::int32_t gear = std::clamp(targetGear, -1, GetMaxGear() + 1);
 
-	if (bypassCheck == false && g_IniConfig.Get<bool>("SMGM.ImmersiveMode")) {
-		if (this->TruckAction->IsInAutoMode == false) {
+	if (g_IniConfig.Get<bool>("SMGM.ImmersiveMode")) {
+		if (IsInAuto[this] == false) {
 			return true;
 		}
 		gear = std::clamp(targetGear, 1, GetMaxGear());
 	}
 
-	bool bSwitched = SMGM_CALL_HOOK(ShiftGear, this, gear, true);
+	bool bSwitched = SMGM_CALL_HOOK(ShiftGear, this, gear);
 
 	if (bSwitched) {
 		SetPowerCoef(powerCoef);

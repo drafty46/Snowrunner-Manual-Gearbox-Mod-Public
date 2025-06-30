@@ -14,6 +14,7 @@
 #include <winerror.h>
 #include <winuser.h>
 #include "utils/keymap.h"
+#include <chrono>
 
 #include <boost/mp11.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -110,6 +111,7 @@ namespace smgm {
 
 	void InputReader::ProcessKeys() {
 		LOG_DEBUG("Started processing");
+		auto nextFrameTime = std::chrono::steady_clock::now();
 		while (!m_bStop) {
 			std::shared_lock lck(m_mtx);
 
@@ -166,6 +168,9 @@ namespace smgm {
 					}
 				}
 			}
+			nextFrameTime += std::chrono::milliseconds(16);
+			std::this_thread::sleep_until(nextFrameTime);
+			nextFrameTime = std::chrono::steady_clock::now();
 		}
 
 		LOG_DEBUG("Finished processing");

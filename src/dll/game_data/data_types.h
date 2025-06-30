@@ -78,7 +78,7 @@ public:
 	 * different coefs.
 	 * @return true - if gear was switched, false otherwise
 	 */
-	bool ShiftToGear(std::int32_t targetGear, float powerCoef = 1.f, bool bypassCheck = false);
+	bool ShiftToGear(std::int32_t targetGear, float powerCoef = 1.f);
 
 	/**
 	 * @brief Switches to next gear, if possible.

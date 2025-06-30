@@ -8,19 +8,19 @@
 
 #include <algorithm>
 
+#include <iostream>
+
 float currentCoef = 1.0f;
+
+std::unordered_map <Vehicle*, bool> IsInAuto{};
 
 extern smgm::IniConfig g_IniConfig;
 
-bool SMGM_HOOK_NAME(ShiftGear)(Vehicle* veh, std::int32_t gear, bool allowShiftGear = false) {
-	bool result{};
-	if (veh->TruckAction->IsInAutoMode == false || allowShiftGear == true) {
-		LOG_DEBUG(fmt::format("[ {} ] Switching gear: {} => {}", FormatPointer(veh),
-			veh->TruckAction->Gear_1, gear));
+bool SMGM_HOOK_NAME(ShiftGear)(Vehicle* veh, std::int32_t gear) {
+	LOG_DEBUG(fmt::format("[ {} ] Switching gear: {} => {}", FormatPointer(veh),
+		veh->TruckAction->Gear_1, gear));
 
-		result = SMGM_CALL_ORIG_FN(ShiftGear, veh, gear);
-	}
-	return result;
+	return SMGM_CALL_ORIG_FN(ShiftGear, veh, gear);
 }
 
 std::int32_t SMGM_HOOK_NAME(GetMaxGear)(const Vehicle* veh) {
@@ -28,20 +28,22 @@ std::int32_t SMGM_HOOK_NAME(GetMaxGear)(const Vehicle* veh) {
 }
 
 void SMGM_HOOK_NAME(ShiftToAutoGear)(Vehicle* veh) {
-
-	veh->TruckAction->IsInAutoMode == true;
-
 	if (g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
 		return;
 	}
 
+	IsInAuto[veh] = true;
+	veh->TruckAction->IsInAutoMode = false;
+
 	if (veh->TruckAction->Gear_1 == (GetMaxGear(veh) + 1)) {
-		veh->ShiftToGear(veh->GetMaxGear() - 1, 1.0f, true);
+		veh->ShiftToGear(veh->GetMaxGear() - 1, 1.0f);
 	}
 	else if (veh->TruckAction->Gear_1 <= 1) {
-		veh->ShiftToGear(1, 1.0f, true);
+		veh->ShiftToGear(1, 1.0f);
 	}
-	SMGM_CALL_ORIG_FN(ShiftToAutoGear, veh);
+	if (!g_IniConfig.Get<bool>("SMGM.RequireClutch") && !g_IniConfig.Get<bool>("SMGM.ImmersiveMode")) {
+		SMGM_CALL_ORIG_FN(ShiftToAutoGear, veh);
+	}
 }
 
 bool SMGM_HOOK_NAME(ShiftToReverse)(Vehicle* veh) {
@@ -73,15 +75,20 @@ bool SMGM_HOOK_NAME(DisableAutoAndShift)(Vehicle* veh, std::int32_t gear) {
 		return false;
 	}
 
-	return SMGM_CALL_ORIG_FN(DisableAutoAndShift, veh, gear);
+	bool result = SMGM_CALL_ORIG_FN(DisableAutoAndShift, veh, gear);
+	IsInAuto[veh] = false;
+	return result;
 }
 
 void SMGM_HOOK_NAME(SetPowerCoef)(Vehicle* veh, float coef) {
 	if (g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
 		coef = currentCoef;
 	}
-
+	if (IsInAuto[veh] && (veh->TruckAction->Gear_1 == 1 || veh->TruckAction->Gear_2 == 1)) {
+		coef = 1.01;
+	}
 	SMGM_CALL_ORIG_FN(SetPowerCoef, veh, coef);
+	SMGM_CALL_ORIG_FN(ShiftGear, veh, veh->TruckAction->Gear_2);
 }
 
 void SMGM_HOOK_NAME(SetCurrentVehicle)(combine_TRUCK_CONTROL* truckCtrl,
@@ -90,7 +97,11 @@ void SMGM_HOOK_NAME(SetCurrentVehicle)(combine_TRUCK_CONTROL* truckCtrl,
 
 	LOG_DEBUG(fmt::format("Current vehicle changed to {}", FormatPointer(veh)));
 
-	if (veh && g_IniConfig.Get<bool>("SMGM.DisableGameShifting")) {
+	if (veh) {
+		IsInAuto[veh] = veh->TruckAction->IsInAutoMode;
+		if (IsInAuto[veh]) {
+			veh->ShiftToGear(1);
+		}
 		veh->TruckAction->IsInAutoMode = false;
 	}
 }
