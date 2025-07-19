@@ -33,6 +33,9 @@ extern float currentCoef;
 WORD clutchKb{};
 WORD clutchJoy{};
 
+WORD rangeKb{};
+WORD rangeJoy{};
+
 WORD detachKb{};
 WORD detachJoy{};
 
@@ -43,6 +46,9 @@ extern bool IsActiveWindowCurrentProcess();
 
 std::atomic<bool> isClutchPressedKb{};
 std::atomic<bool> isClutchPressedJoy{};
+
+std::atomic<bool> isRangePressedKb{};
+std::atomic<bool> isRangePressedJoy{};
 
 namespace smgm {
 
@@ -122,6 +128,9 @@ namespace smgm {
 						if (key == clutchKb) {
 							isClutchPressedKb = true;
 						}
+						else if (key == rangeKb) {
+							isRangePressedKb = true;
+						}
 						if (!info.bPressed) {
 							info.bPressed = true;
 
@@ -134,6 +143,9 @@ namespace smgm {
 						info.bPressed = false;
 						if (key == clutchKb) {
 							isClutchPressedKb = false;
+						}
+						else if (key == rangeKb) {
+							isRangePressedKb = false;
 						}
 					}
 				}
@@ -150,6 +162,9 @@ namespace smgm {
 							if (ks.VirtualKey == clutchJoy) {
 								isClutchPressedJoy = true;
 							}
+							else if (ks.VirtualKey == rangeJoy) {
+								isRangePressedJoy = true;
+							}
 							if (!info.bPressed) {
 								info.bPressed = true;
 
@@ -163,6 +178,9 @@ namespace smgm {
 							info.bPressed = false;
 							if (ks.VirtualKey == clutchJoy) {
 								isClutchPressedJoy = false;
+							}
+							else if (ks.VirtualKey == rangeJoy) {
+								isRangePressedJoy = false;
 							}
 						}
 					}
@@ -307,19 +325,25 @@ namespace smgm {
 								if (iniKey == "KEYBOARD.CLUTCH") {
 									clutchKb = keyValue->second;
 								}
-								if (iniKey == "JOYSTICK.CLUTCH") {
+								else if (iniKey == "JOYSTICK.CLUTCH") {
 									clutchJoy = keyValue->second;
 								}
-								if (iniKey == "KEYBOARD.DETACH_FROM_GAME") {
+								else if (iniKey == "KEYBOARD.RANGE") {
+									rangeKb = keyValue->second;
+								}
+								else if (iniKey == "JOYSTICK.RANGE") {
+									rangeJoy = keyValue->second;
+								}
+								else if (iniKey == "KEYBOARD.DETACH_FROM_GAME") {
 									detachKb = keyValue->second;
 								}
-								if (iniKey == "JOYSTICK.DETACH_FROM_GAME") {
+								else if (iniKey == "JOYSTICK.DETACH_FROM_GAME") {
 									detachJoy = keyValue->second;
 								}
-								if (iniKey == "KEYBOARD.RELOAD_CONFIG") {
+								else if (iniKey == "KEYBOARD.RELOAD_CONFIG") {
 									reloadKb = keyValue->second;
 								}
-								if (iniKey == "JOYSTICK.RELOAD_CONFIG") {
+								else if (iniKey == "JOYSTICK.RELOAD_CONFIG") {
 									reloadJoy = keyValue->second;
 								}
 							}

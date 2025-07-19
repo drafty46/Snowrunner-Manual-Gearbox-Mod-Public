@@ -5,9 +5,14 @@
 
 #include <algorithm>
 
+#include <iostream>
+
 extern smgm::IniConfig g_IniConfig;
 
-extern std::unordered_map<Vehicle*, bool> IsInAuto;
+extern std::unordered_map<Vehicle*, std::atomic<bool>> IsInAuto;
+
+extern std::atomic<bool> isRangePressedKb;
+extern std::atomic<bool> isRangePressedJoy;
 
 void Vehicle::SetPowerCoef(float coef) { SMGM_CALL_HOOK(SetPowerCoef, this, coef); }
 
@@ -23,6 +28,11 @@ bool Vehicle::ShiftToGear(std::int32_t targetGear, float powerCoef) {
 			return true;
 		}
 		gear = std::clamp(targetGear, 1, GetMaxGear());
+	}
+
+	if ((isRangePressedKb || isRangePressedJoy) && gear != (GetMaxGear() + 1)) {
+		gear += 6;
+		gear = std::clamp(gear, 1, GetMaxGear());
 	}
 
 	bool bSwitched = SMGM_CALL_HOOK(ShiftGear, this, gear);

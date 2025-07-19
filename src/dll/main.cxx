@@ -33,7 +33,7 @@ std::atomic_bool g_Shutdown = false;
 smgm::InputReader* g_InputReader = nullptr;
 smgm::IniConfig g_IniConfig;
 
-extern std::unordered_map<Vehicle*, bool> IsInAuto;
+extern std::unordered_map<Vehicle*, std::atomic<bool>> IsInAuto;
 
 bool IsActiveWindowCurrentProcess() {
 	HWND hwnd = GetForegroundWindow();
@@ -72,7 +72,7 @@ void Init(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 	spdlog::set_level(spdlog::level::debug);
 	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
 
-	LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.4");
+	LOG_DEBUG("SnowRunner Manual Gearbox++ v1.697880.5");
 
 	if (!g_IniConfig.WriteDefaultConfig()) {
 		g_IniConfig.Read();

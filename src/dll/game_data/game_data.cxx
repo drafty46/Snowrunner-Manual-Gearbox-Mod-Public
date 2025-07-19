@@ -12,7 +12,7 @@
 
 float currentCoef = 1.0f;
 
-std::unordered_map <Vehicle*, bool> IsInAuto{};
+std::unordered_map <Vehicle*, std::atomic<bool>> IsInAuto{};
 
 extern smgm::IniConfig g_IniConfig;
 
