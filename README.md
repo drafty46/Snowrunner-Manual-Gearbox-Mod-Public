@@ -1,4 +1,8 @@
-# SnowRunner Manual Gearbox Mod
+# THIS WILL [NOT](https://youtu.be/dQw4w9WgXcQ) BE MAINTAINED! 
+
+# NEW PROJECT [HERE!](https://github.com/drafty46/SMT)
+
+## SnowRunner Manual Gearbox Mod
 
 Disables 'auto' gear shifting in favor of manual shifting through custom keybindings for keyboard and gamepad.
 
